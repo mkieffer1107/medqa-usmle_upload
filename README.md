@@ -22,4 +22,4 @@ chmod +x run.sh
 
 Voila! The dataset now lives [on HuggingFace](https://huggingface.co/datasets/mkieffer/MedQA-USMLE).
 
-All credit belongs to the original MedQA-USMLE authors.
+All credit belongs to the original [MedQA authors](https://github.com/jind11/MedQA).
