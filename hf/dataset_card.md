@@ -1,10 +1,13 @@
-# MEDEC-MS
+
+# MedQA-USMLE
 
 HuggingFace upload of the MedQA-USMLE dataset with deduping. If used, please cite the original authors using the citation below.
 
 A small number of exact-duplicate questions were identified within `train` and `us_qbank`. The question text was identical, but the options were formatted slightly differently or had a different distractor. The main difference was the listed correct letter, so the incorrect duplicates were removed. Each split was then reindexed to keep indices contiguous, and the original row index from the raw files is preserved in the `source_index` column.
 
-As I am not a medical expert, I asked [GPT-5.2 Extended Thinking in ChatGPT](https://chatgpt.com/share/6982f20e-b054-8008-8775-763f6b97c8e5) (a medical expert*) to choose the correct letter choice for duplicate pairs:
+## Dr. GPT
+
+As I am not a doctor, I asked [GPT-5.2 Extended Thinking in ChatGPT](https://chatgpt.com/share/6982f20e-b054-8008-8775-763f6b97c8e5) (a medical expert*) to choose the correct letter choice for duplicate pairs:
 
 For `train` split, `source_ids` (855, 7255):
 
@@ -54,3 +57,5 @@ This is Sheehan syndrome (postpartum hemorrhage → pituitary infarction) causin
   year={2020}
 }
 ```
+
+\* GPT-5.2 and co. have passed the USMLE :)
