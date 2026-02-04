@@ -81,6 +81,47 @@ def normalize_options(records: list[dict], option_keys: list[str]) -> None:
         record["options"] = normalized
 
 
+def report_question_duplicates(split_records: dict[str, list[dict]]) -> None:
+    print("\nDuplicate questions by split (index pairs):")
+    any_found = False
+    for split, records in split_records.items():
+        question_to_indices: dict[str, list[int]] = {}
+        for record in records:
+            question = _to_str(record.get("question"))
+            question_to_indices.setdefault(question, []).append(record["index"])
+
+        dup_pairs = []
+        for indices in question_to_indices.values():
+            if len(indices) > 1:
+                for i in range(len(indices)):
+                    for j in range(i + 1, len(indices)):
+                        dup_pairs.append((indices[i], indices[j]))
+
+        if dup_pairs:
+            any_found = True
+            print(f"  {split}: {len(dup_pairs)} pair(s)")
+            for a, b in dup_pairs:
+                print(f"    ({a}, {b})")
+        else:
+            print(f"  {split}: none")
+
+    if not any_found:
+        print("  (none found across all splits)")
+
+
+def drop_and_reindex(
+    split_records: dict[str, list[dict]],
+    drop_indices_by_split: dict[str, set[int]],
+) -> None:
+    for split, records in split_records.items():
+        drop_indices = drop_indices_by_split.get(split, set())
+        filtered = [record for record in records if record["index"] not in drop_indices]
+        for new_index, record in enumerate(filtered):
+            record["source_index"] = record["index"]
+            record["index"] = new_index
+        split_records[split] = filtered
+
+
 if __name__ == "__main__":
     missing = []
     for split, filename in SPLIT_FILES.items():
@@ -92,12 +133,24 @@ if __name__ == "__main__":
         missing_str = "\n  - ".join(missing)
         raise SystemExit(f"Missing data files:\n  - {missing_str}\nRun ./run.sh to download them first.")
 
-    print("Dataset sizes:")
     split_records = {}
     for split, filename in SPLIT_FILES.items():
         path = os.path.join(DATA_DIR, filename)
         records = load_jsonl_with_index(path)
         split_records[split] = records
+
+    report_question_duplicates(split_records)
+
+    drop_and_reindex(
+        split_records,
+        {
+            "train": {7255, 8021},
+            "us_qbank": {1176, 2197},
+        },
+    )
+
+    print("\nDataset sizes (post-filter):")
+    for split, records in split_records.items():
         print(f"  {split}: {len(records)}")
 
     option_keys = set()
@@ -120,7 +173,7 @@ if __name__ == "__main__":
 
     for split, records in split_records.items():
         dataset = Dataset.from_list(records)
-        desired_order = ["index", "question", "options", "answer", "meta_info"]
+        desired_order = ["index", "source_index", "question", "options", "answer", "meta_info"]
         column_order = desired_order + [c for c in dataset.column_names if c not in desired_order]
         dataset = dataset.select_columns(column_order)
         print(f"Pushing '{split}' split...")
